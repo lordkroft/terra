@@ -30,3 +30,7 @@ variable "availability_zones" {
     type = list
     default = ["us-east-2a", "us-east-2b"]
 }
+
+variable "app_count" {
+    default = "1"
+}

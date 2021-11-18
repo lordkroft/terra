@@ -200,6 +200,7 @@ ingress {
 from_port = 22
     to_port = 22
     protocol = "tcp"
+}
 ingress {
     cidr_blocks = [
       "0.0.0.0/0"
@@ -209,7 +210,7 @@ from_port = 8080
     protocol = "tcp"
   }
 // Terraform removes the default rule
-  egress {
+egress {
    from_port = 0
    to_port = 0
    protocol = "-1"
@@ -218,10 +219,11 @@ from_port = 8080
 tags = {
     Name = "jenkins-sg"
   }
-}
+ }
 
-resource "aws_security_group" "galera-alb" {
-name = "alb-sg"
+
+resource "aws_security_group" "galera-alb-sg" {
+name = "galera-alb-sg"
 vpc_id = "${aws_vpc.galera-vpc.id}"
 ingress {
     cidr_blocks = [
@@ -230,35 +232,38 @@ ingress {
 from_port = 8080
     to_port = 8080
     protocol = "tcp"
+}
 ingress {
     cidr_blocks = [
-      "0.0.0.0/0"
+      "0.0.0.0/0"]
 from_port = 5000
     to_port = 5000
     protocol = "tcp"
   }
 // Terraform removes the default rule
-  egress {
+egress {
    from_port = 0
    to_port = 0
    protocol = "-1"
    cidr_blocks = ["0.0.0.0/0"]
  }
 tags = {
-    Name = "alb-sg"
+    Name = "galera-alb-sg"
   }
-}
+ }
 
-resource "aws_security_group" "galera-app" {
-name = "allow-http-sg"
+
+resource "aws_security_group" "galera-http-sg" {
+name = "galera-http-sg"
 vpc_id = "${aws_vpc.galera-vpc.id}"
 ingress {
-    cidr_blocks = [
-      "0.0.0.0/0"
-    ]
-from_port = 80
-    to_port = 80
+    # cidr_blocks = [
+    #   "0.0.0.0/0"
+    # ]
+from_port = 5000
+    to_port = 5000
     protocol = "tcp"
+    security_groups = [aws_security_group.galera-alb-sg.id]
   }
 // Terraform removes the default rule
   egress {
@@ -268,9 +273,89 @@ from_port = 80
    cidr_blocks = ["0.0.0.0/0"]
  }
 tags = {
-    Name = "allow_http-sg"
+    Name = "galera-http-sg"
   }
 }
+
+resource "aws_lb" "galera-lb" {
+  name            = "galera-lb"
+  subnets         = aws_subnet.public_subnet.*.id
+  security_groups = [aws_security_group.galera-alb-sg.id]
+}
+
+
+resource "aws_lb_target_group" "galera-tg-http" {
+  name        = "galera-tg-http"
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.galera-vpc.id
+  target_type = "ip"
+}
+
+
+resource "aws_lb_listener" "galera-http-listener" {
+  load_balancer_arn = aws_lb.galera-lb.id
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    target_group_arn = aws_lb_target_group.galera-tg-http.id
+    type             = "forward"
+  }
+}
+
+resource "aws_ecs_task_definition" "galera-app" {
+  family                   = "galera-app"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = 1024
+  memory                   = 1024
+
+  container_definitions = <<DEFINITION
+[
+  {
+    "image": "heroku/nodejs-hello-world",
+    "cpu": 1024,
+    "memory": 1024,
+    "name": "galera-app",
+    "networkMode": "awsvpc",
+    "portMappings": [
+      {
+        "containerPort": 5000,
+        "hostPort": 5000
+      }
+    ]
+  }
+]
+DEFINITION
+}
+
+
+resource "aws_ecs_cluster" "galera-cluster" {
+  name = "galera-cluster"
+}
+
+resource "aws_ecs_service" "galera-app-service" {
+  name            = "galera-app-service"
+  cluster         = aws_ecs_cluster.galera-cluser.id
+  task_definition = aws_ecs_task_definition.galera-app.arn
+  desired_count   = var.app_count
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    security_groups = [aws_security_group.galera-http-sg.id]
+    subnets         = aws_subnet.private_subnet.*.id
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.galera-tg-http.id
+    container_name   = "galera-app"
+    container_port   = 5000
+  }
+
+  depends_on = [aws_lb_listener.galera-http-listener]
+}
+
 
 
 
@@ -300,6 +385,4 @@ tags = {
 #     Name = "bastionhost"
 #     }
 # }
-
-
 
