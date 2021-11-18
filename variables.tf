@@ -34,3 +34,7 @@ variable "availability_zones" {
 variable "app_count" {
     default = "1"
 }
+
+variable "container_image" {
+    default = "galera-app"
+}

@@ -1,4 +1,6 @@
 **./terraform/*
+./terraform/*
+.terraform/*
 override.tf
 override.tf.json
 *_override.tf

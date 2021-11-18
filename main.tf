@@ -11,12 +11,6 @@ provider "aws" {
     region = "us-east-2"
 }
 
-
-
-#module "vpc" {
-#    source = "terraform-aws-modules/vpc/aws"
-#    version = "2.21.0"
-#    name = "galera-vpc"
 resource "aws_vpc" "galera-vpc" {
     cidr_block = var.vpc_cidr
   #enable_nat_gateway = true
@@ -75,44 +69,6 @@ resource "aws_subnet" "private_subnet" {
   }
 }
 
-# resource "aws_subnet" "galera-subnet-public-1" {
-#     vpc_id = aws_vpc.galera-vpc.id
-#     cidr_block = "10.0.101.0/24"
-#     map_public_ip_on_launch = "true" //it makes this a public subnet
-#     availability_zone = "us-east-2a"
-#     tags = {
-#         Name = "galera-subnet-public-1"
-#     }
-# }
-# resource "aws_subnet" "galera-subnet-public-2" {
-#     vpc_id = aws_vpc.galera-vpc.id
-#     cidr_block = "10.0.102.0/24"
-#     map_public_ip_on_launch = "true" //it makes this a public subnet
-#     availability_zone = "us-east-2b"
-#     tags = {
-#         Name = "galera-subnet-public-2"
-#     }
-# }
-
-# resource "aws_subnet" "galera-subnet-private-1" {
-#     vpc_id = aws_vpc.galera-vpc.id
-#     cidr_block = "10.0.1.0/24"
-#     map_public_ip_on_launch = "true" //it makes this a public subnet
-#     availability_zone = "us-east-2a"
-#     tags = {
-#         Name = "galera-subnet-private-1"
-#     }
-# }
-
-# resource "aws_subnet" "galera-subnet-private-2" {
-#     vpc_id = aws_vpc.galera-vpc.id
-#     cidr_block = "10.0.2.0/24"
-#     map_public_ip_on_launch = "true" //it makes this a public subnet
-#     availability_zone = "us-east-2b"
-#     tags = {
-#         Name = "galera-subnet-private-2"
-#     }
-# }
 resource "aws_route_table" "galera-private-Rtable" {
     vpc_id = "${aws_vpc.galera-vpc.id}"
     
@@ -154,17 +110,6 @@ resource "aws_route_table_association" "private" {
   subnet_id      = "${element(aws_subnet.private_subnet.*.id, count.index)}"
   route_table_id = "${aws_route_table.galera-private-Rtable.id}"
 }
-
-# #Route table Association with Public Subnet's
-#  resource "aws_route_table_association" "PublicRTassociation" {
-#     subnet_id = aws_subnet.galera-subnet-public-1.id
-#     route_table_id = aws_route_table.galera-public-Rtable.id
-#  }
-# # Route table Association with Private Subnet's
-#  resource "aws_route_table_association" "PrivateRTassociation" {
-#     subnet_id = aws_subnet.galera-subnet-private-1.id
-#     route_table_id = aws_route_table.galera-private-Rtable.id
-#  }
 
 resource "aws_security_group" "galera-bastion-ssh" {
   depends_on=[aws_subnet.public_subnet]
@@ -277,6 +222,30 @@ tags = {
   }
 }
 
+resource "aws_ecr_repository" "galera-ecr" {
+  name                 = "galera-ecr"
+  image_tag_mutability = "MUTABLE"
+}
+
+resource "aws_ecr_lifecycle_policy" "galera-ecr-policy" {
+  repository = aws_ecr_repository.galera-ecr.name
+ 
+  policy = jsonencode({
+   rules = [{
+     rulePriority = 1
+     description  = "keep last 5 images"
+     action       = {
+       type = "expire"
+     }
+     selection     = {
+       tagStatus   = "any"
+       countType   = "imageCountMoreThan"
+       countNumber = 5
+     }
+   }]
+  })
+}
+
 resource "aws_lb" "galera-lb" {
   name            = "galera-lb"
   subnets         = aws_subnet.public_subnet.*.id
@@ -304,32 +273,45 @@ resource "aws_lb_listener" "galera-http-listener" {
   }
 }
 
+resource "aws_iam_role" "galera-ecs-task-role" {
+  name = "galera-ecsTaskRole"
+  assume_role_policy = <<EOF
+{
+ "Version": "2012-10-17",
+ "Statement": [
+   {
+     "Action": "sts:AssumeRole",
+     "Principal": {
+       "Service": "ecs-tasks.amazonaws.com"
+     },
+     "Effect": "Allow",
+     "Sid": ""
+   }
+ ]
+}
+EOF
+}
+
 resource "aws_ecs_task_definition" "galera-app" {
   family                   = "galera-app"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = 1024
-  memory                   = 1024
-
-  container_definitions = <<DEFINITION
-[
-  {
-    "image": "heroku/nodejs-hello-world",
-    "cpu": 1024,
-    "memory": 1024,
-    "name": "galera-app",
-    "networkMode": "awsvpc",
-    "portMappings": [
-      {
-        "containerPort": 5000,
-        "hostPort": 5000
-      }
-    ]
+  cpu                      = 256
+  memory                   = 512
+  execution_role_arn       = "arn:aws:iam::413752907951:user/lordkroft" #aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn            = aws_iam_role.galera-ecs-task-role.id
+  container_definitions = jsonencode([{
+   name        = "galera-app"
+   image       = "${var.container_image}:latest"
+   essential   = true
+   #environment = var.container_environment
+   portMappings = [{
+     protocol      = "tcp"
+     containerPort = 5000
+     hostPort      = 5000
+  }]
+  }])
   }
-]
-DEFINITION
-}
-
 
 resource "aws_ecs_cluster" "galera-cluster" {
   name = "galera-cluster"
@@ -337,7 +319,7 @@ resource "aws_ecs_cluster" "galera-cluster" {
 
 resource "aws_ecs_service" "galera-app-service" {
   name            = "galera-app-service"
-  cluster         = aws_ecs_cluster.galera-cluser.id
+  cluster         = aws_ecs_cluster.galera-cluster.id
   task_definition = aws_ecs_task_definition.galera-app.arn
   desired_count   = var.app_count
   launch_type     = "FARGATE"
@@ -352,37 +334,73 @@ resource "aws_ecs_service" "galera-app-service" {
     container_name   = "galera-app"
     container_port   = 5000
   }
-
   depends_on = [aws_lb_listener.galera-http-listener]
+} 
+
+resource "aws_appautoscaling_target" "ecs_target" {
+  max_capacity       = 2
+  min_capacity       = 1
+  resource_id        = "service/${aws_ecs_cluster.galera-cluster.name}/${aws_ecs_service.galera-app-service.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
 }
 
-
-
-
+resource "aws_appautoscaling_policy" "ecs_policy_memory" {
+  name               = "memory-autoscaling"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.ecs_target.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_target.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_target.service_namespace
+ 
+  target_tracking_scaling_policy_configuration {
+   predefined_metric_specification {
+     predefined_metric_type = "ECSServiceAverageMemoryUtilization"
+   }
+ 
+   target_value       = 90
+   
+  }
+}
+ 
+resource "aws_appautoscaling_policy" "ecs_policy_cpu" {
+  name               = "cpu-autoscaling"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.ecs_target.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_target.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_target.service_namespace
+ 
+  target_tracking_scaling_policy_configuration {
+   predefined_metric_specification {
+     predefined_metric_type = "ECSServiceAverageCPUUtilization"
+   }
+ 
+   target_value       = 80
+  }
+}
 
 # resource "aws_instance" "jenki" {
 #   ami           = "ami-0ba62214afa52bec7"
 #   instance_type = "t3.medium"
 
+#     key_name               = "app-demo-key"
+#     monitoring             = true
+#     vpc_security_group_ids = aws_security_group.galera-jenkins.id
+#     subnet_id              = aws_subnet.public_subnet.id
+  
 #   tags = {
 #     Name = "jenki"
 #   }
-#     key_name               = "app-demo-key"
-#     monitoring             = true
-#     vpc_security_group_ids = ["sg-09418841b953f534c"]
-#     subnet_id              = "subnet-0388b7335b4f4c6e2"
-  
 # }
 
-# resource "aws_instance" "BASTION" {
-#   ami           = "ami-0732b62d310b80e97"
+# resource "aws_instance" "bastion" {
+#   ami           = "ami-0629230e074c580f2"
 #   instance_type = "t2.micro"
-#   subnet_id = aws_subnet.My_VPC_Subnet.id
-#   vpc_security_group_ids = [ aws_security_group.only_ssh_bositon.id ]
-#   key_name = "task1-key"
+#   subnet_id = aws_subnet.public_subnet.id
+#   vpc_security_group_ids = [ aws_security_group.galera-bastion-ssh.id ]
+#   key_name = "app-demo-key"
 
 #   tags = {
-#     Name = "bastionhost"
+#     Name = "bastion"
 #     }
 # }
 
