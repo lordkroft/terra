@@ -11,19 +11,7 @@ provider "aws" {
     region = "us-east-2"
 }
 
-# resource "aws_instance" "jenki" {
-#   ami           = "ami-0ba62214afa52bec7"
-#   instance_type = "t3.medium"
 
-#   tags = {
-#     Name = "jenki"
-#   }
-#     key_name               = "app-demo-key"
-#     monitoring             = true
-#     vpc_security_group_ids = ["sg-09418841b953f534c"]
-#     subnet_id              = "subnet-0388b7335b4f4c6e2"
-  
-# }
 
 #module "vpc" {
 #    source = "terraform-aws-modules/vpc/aws"
@@ -31,11 +19,6 @@ provider "aws" {
 #    name = "galera-vpc"
 resource "aws_vpc" "galera-vpc" {
     cidr_block = var.vpc_cidr
-
-#  azs = var.vpc_azs
-#  private_subnets = ["aws_vpc.galera-subnet-private-1}", "aws_vpc.galera-subnet-private-2"]   #["10.0.1.0/24", "10.0.2.0/24"]
-#  public_subnets  = ["aws_vpc.galera-subnet-public-1", "aws_vpc.galera-subnet-public-2"]   #["10.0.101.0/24", "10.0.102.0/24"]
-
   #enable_nat_gateway = true
   #enable_vpn_gateway = true
     tags = {
@@ -53,8 +36,9 @@ resource "aws_internet_gateway" "galera-igw" {
 }
 
 resource "aws_eip" "nat_EIP" {
-   vpc   = true
-   depends_on = [aws_internet_gateway.galera-igw]
+  vpc   = true
+  depends_on = [aws_internet_gateway.galera-igw]
+#  public_ipv4_pool = "amazon"
 }
 
 resource "aws_nat_gateway" "galera-NATgw" {
@@ -90,9 +74,6 @@ resource "aws_subnet" "private_subnet" {
     Environment = "${var.environment}"
   }
 }
-
-
-
 
 # resource "aws_subnet" "galera-subnet-public-1" {
 #     vpc_id = aws_vpc.galera-vpc.id
@@ -174,9 +155,6 @@ resource "aws_route_table_association" "private" {
   route_table_id = "${aws_route_table.galera-private-Rtable.id}"
 }
 
-
-
-
 # #Route table Association with Public Subnet's
 #  resource "aws_route_table_association" "PublicRTassociation" {
 #     subnet_id = aws_subnet.galera-subnet-public-1.id
@@ -189,7 +167,8 @@ resource "aws_route_table_association" "private" {
 #  }
 
 resource "aws_security_group" "galera-bastion-ssh" {
-name = "allow-all-sg"
+  depends_on=[aws_subnet.public_subnet]
+name        = "only_ssh_bositon"
 vpc_id = "${aws_vpc.galera-vpc.id}"
 ingress {
     cidr_blocks = [
@@ -206,10 +185,13 @@ from_port = 22
    protocol = "-1"
    cidr_blocks = ["0.0.0.0/0"]
  }
+tags = {
+  Name = "only_ssh_bositon"
+  }
 }
 
 resource "aws_security_group" "galera-jenkins" {
-name = "allow-ssh-sg"
+name        = "jenkins-sg"
 vpc_id = "${aws_vpc.galera-vpc.id}"
 ingress {
     cidr_blocks = [
@@ -218,6 +200,10 @@ ingress {
 from_port = 22
     to_port = 22
     protocol = "tcp"
+ingress {
+    cidr_blocks = [
+      "0.0.0.0/0"
+    ]
 from_port = 8080
     to_port = 8080
     protocol = "tcp"
@@ -229,10 +215,91 @@ from_port = 8080
    protocol = "-1"
    cidr_blocks = ["0.0.0.0/0"]
  }
+tags = {
+    Name = "jenkins-sg"
+  }
+}
+
+resource "aws_security_group" "galera-alb" {
+name = "alb-sg"
+vpc_id = "${aws_vpc.galera-vpc.id}"
+ingress {
+    cidr_blocks = [
+      "0.0.0.0/0"
+    ]
+from_port = 8080
+    to_port = 8080
+    protocol = "tcp"
+ingress {
+    cidr_blocks = [
+      "0.0.0.0/0"
+from_port = 5000
+    to_port = 5000
+    protocol = "tcp"
+  }
+// Terraform removes the default rule
+  egress {
+   from_port = 0
+   to_port = 0
+   protocol = "-1"
+   cidr_blocks = ["0.0.0.0/0"]
+ }
+tags = {
+    Name = "alb-sg"
+  }
+}
+
+resource "aws_security_group" "galera-app" {
+name = "allow-http-sg"
+vpc_id = "${aws_vpc.galera-vpc.id}"
+ingress {
+    cidr_blocks = [
+      "0.0.0.0/0"
+    ]
+from_port = 80
+    to_port = 80
+    protocol = "tcp"
+  }
+// Terraform removes the default rule
+  egress {
+   from_port = 0
+   to_port = 0
+   protocol = "-1"
+   cidr_blocks = ["0.0.0.0/0"]
+ }
+tags = {
+    Name = "allow_http-sg"
+  }
 }
 
 
 
+
+# resource "aws_instance" "jenki" {
+#   ami           = "ami-0ba62214afa52bec7"
+#   instance_type = "t3.medium"
+
+#   tags = {
+#     Name = "jenki"
+#   }
+#     key_name               = "app-demo-key"
+#     monitoring             = true
+#     vpc_security_group_ids = ["sg-09418841b953f534c"]
+#     subnet_id              = "subnet-0388b7335b4f4c6e2"
+  
+# }
+
+# resource "aws_instance" "BASTION" {
+#   ami           = "ami-0732b62d310b80e97"
+#   instance_type = "t2.micro"
+#   subnet_id = aws_subnet.My_VPC_Subnet.id
+#   vpc_security_group_ids = [ aws_security_group.only_ssh_bositon.id ]
+#   key_name = "task1-key"
+
+#   tags = {
+#     Name = "bastionhost"
+#     }
+# }
 
 
 
