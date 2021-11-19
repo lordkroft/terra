@@ -378,29 +378,29 @@ resource "aws_appautoscaling_policy" "ecs_policy_cpu" {
   }
 }
 
-# resource "aws_instance" "jenki" {
-#   ami           = "ami-0ba62214afa52bec7"
-#   instance_type = "t3.medium"
+resource "aws_instance" "jenki" {
+  ami           = "ami-0ba62214afa52bec7"
+  instance_type = "t3.medium"
 
-#     key_name               = "app-demo-key"
-#     monitoring             = true
-#     vpc_security_group_ids = aws_security_group.galera-jenkins.id
-#     subnet_id              = aws_subnet.public_subnet.id
+    key_name               = "app-demo-key"
+    monitoring             = true
+    vpc_security_group_ids = [aws_security_group.galera-jenkins.id]
+    subnet_id              = "${element(aws_subnet.public_subnet.*.id, 0)}"
   
-#   tags = {
-#     Name = "jenki"
-#   }
-# }
+  tags = {
+    Name = "jenki"
+  }
+}
 
-# resource "aws_instance" "bastion" {
-#   ami           = "ami-0629230e074c580f2"
-#   instance_type = "t2.micro"
-#   subnet_id = aws_subnet.public_subnet.id
-#   vpc_security_group_ids = [ aws_security_group.galera-bastion-ssh.id ]
-#   key_name = "app-demo-key"
+resource "aws_instance" "bastion" {
+  ami           = "ami-0629230e074c580f2"
+  instance_type = "t2.micro"
+  subnet_id = "${element(aws_subnet.public_subnet.*.id, 1)}"
+  vpc_security_group_ids = [ aws_security_group.galera-bastion-ssh.id ]
+  key_name = "app-demo-key"
 
-#   tags = {
-#     Name = "bastion"
-#     }
-# }
+  tags = {
+    Name = "bastion"
+    }
+}
 
