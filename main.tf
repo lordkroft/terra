@@ -1,16 +1,3 @@
-terraform {
-    backend "s3" {
-        bucket = "my-test-musorka"
-        key = "dev/terraform.tfstate"
-        region = "us-east-2"
-    }
-}
-
-provider "aws" {
-    profile = "lordkroft"
-    region = "us-east-2"
-}
-
 resource "aws_vpc" "galera-vpc" {
     cidr_block = var.vpc_cidr
   #enable_nat_gateway = true
@@ -37,7 +24,7 @@ resource "aws_eip" "nat_EIP" {
 
 resource "aws_nat_gateway" "galera-NATgw" {
    allocation_id = aws_eip.nat_EIP.id
-   subnet_id = "${element(aws_subnet.public_subnet.*.id, 0)}"
+   subnet_id = "${element(aws_subnet.private_subnet.*.id, 0)}"
    depends_on    = [aws_internet_gateway.galera-igw]
    tags = {
     Name        = "nat"
