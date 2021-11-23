@@ -1,5 +1,5 @@
 output "vpc_id" {
-    value = aws_vpc.main.id
+    value = aws_vpc.galera-vpc.id
 }
 
 output "vpc_cidr" {
