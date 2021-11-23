@@ -119,12 +119,16 @@ resource "aws_route" "public_nat_gateway" {
 resource "aws_route_table_association" "public" {
 #  count          = "${var.public_subnets_cidr}"
   count          = "${length(data.aws_availability_zones.available.names)}"
-  subnet_id      = "${element(aws_subnet.public_subnet.*.id, count.index)}"
+#  subnet_id      = "${element(aws_subnet.public_subnet.*.id, count.index)}"
+  for.each       =  data.aws_subnet_ids.public_subnet.ids
+  subnet_id      = each.value.id
   route_table_id = "${aws_route_table.galera-public-Rtable.id}"
 }
 resource "aws_route_table_association" "private" {
 #  count          = "${var.private_subnets_cidr}"
   count          = "${length(data.aws_availability_zones.available.names)}"
-  subnet_id      = "${element(aws_subnet.private_subnet.*.id, count.index)}"
+#  subnet_id      = "${element(aws_subnet.private_subnet.*.id, count.index)}"
+  for.each       =  data.aws_subnet_ids.private_subnet.ids
+  subnet_id      = each.value.id
   route_table_id = "${aws_route_table.galera-private-Rtable.id}"
 }
