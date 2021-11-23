@@ -1,11 +1,3 @@
-data "aws_subnet_ids" "public" {
-   vpc_id = module.aws_vpc.galera-vpc.id.vpc_id
-   filter {
-    name   = "tag:Name"
-    values = ["public_subnet*"]
-  }
-}
-
 resource "aws_security_group" "galera-alb-sg" {
 description = "Controls access to the ALB"
 name = "galera-alb-sg"

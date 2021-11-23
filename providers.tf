@@ -4,10 +4,10 @@ terraform {
 
 data "terraform_remote_state" "state" {
     backend = "s3"
-    config {
-        bucket = "${var.bucket_name}"
-        key = "${var.bucket_key}"
-        region = "${var.aws_region}"
+    config = {
+        bucket = var.bucket_name
+        key = var.bucket_key
+        region = var.aws_region
     }
 }
 
