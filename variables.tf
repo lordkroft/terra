@@ -10,9 +10,9 @@ variable "aws_region" {
 	default = "us-east-2"
 }
 
-# variable "vpc_cidr" {
-# 	default = "10.20.0.0/16"
-# }
+variable "vpc_id" {
+ 	default = "galera-vpc"
+ }
 
 
 # variable "environment" {

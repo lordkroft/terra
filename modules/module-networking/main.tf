@@ -18,7 +18,7 @@ resource "aws_internet_gateway" "galera-igw" {
 
 resource "aws_eip" "aws_EIP" {
   vpc   = true
-  count = var.private_subnets_cidr
+  count = var.private_subnets
   depends_on = [aws_internet_gateway.galera-igw]
 #  public_ipv4_pool = "amazon"
 }
@@ -37,14 +37,31 @@ resource "aws_eip" "aws_EIP" {
 
 data "aws_availability_zones" "available" {}
 
-resource "aws_subnet" "public_subnet" {
+data "aws_subnet_ids" "public" {
+   vpc_id = aws_vpc.galera-vpc.id
+   filter {
+    name   = "tag:Name"
+    values = ["aws_subnet_public*"]
+    
+  }
+}
+
+data "aws_subnet_ids" "private" {
+   vpc_id = aws_vpc.galera-vpc.id
+   filter {
+    name   = "tag:Name"
+    values = ["aws_subnet_private*"]
+  }
+}
+
+resource "aws_subnet" "public_subnets" {
   vpc_id                  = "${aws_vpc.galera-vpc.id}"
-  cidr_block              = cidrsubnet("${var.vps_cidr}", var.newbits, count.index + var.private_subnets_cidr)
   count                   = "${length(data.aws_availability_zones.available.names)}"
+  cidr_block              = cidrsubnet("${var.vpc_cidr}", var.newbits_number, count.index)
   availability_zone       = "${data.aws_availability_zones.available.names[count.index]}"
   map_public_ip_on_launch = true
   tags = {
-    Name        = "${var.environment}-public-subnet-${count.index + 1}"
+    Name        = "${var.environment}-public-subnets-${count.index + 1}"
     Environment = "${var.environment}"
   }
 }
@@ -61,19 +78,20 @@ resource "aws_subnet" "public_subnet" {
 #   }
 # }
 
-resource "aws_subnet" "private_subnet" {
+resource "aws_subnet" "private_subnets" {
   vpc_id                  = "${aws_vpc.galera-vpc.id}"
-  cidr_block              = cidrsubnet("${var.vpc_cidr}", var.newbits, count.index)
   count                   = "${length(data.aws_availability_zones.available.names)}"
+  cidr_block              = cidrsubnet("${var.vpc_cidr}", var.newbits_number, count.index)
   availability_zone       = "${data.aws_availability_zones.available.names[count.index]}"
   map_public_ip_on_launch = false
   tags = {
-    Name        = "${var.environment}-private-subnet-${count.index + 1}"
+    Name        = "${var.environment}-private-subnets-${count.index + 1}"
     Environment = "${var.environment}"
   }
 }
 
 resource "aws_nat_gateway" "galera-nat-gw" {
+   count = "${length(data.aws_availability_zones.available.names)}"
    allocation_id     = "${aws_eip.aws_EIP[count.index].id}"
    connectivity_type = "public"
    subnet_id         = "${element(aws_subnet.private_subnets.*.id, 0)}"
@@ -93,10 +111,9 @@ resource "aws_route_table" "galera-private-Rtable" {
 }
 
 resource "aws_route" "private" {
-    vpc_id = "${aws_vpc.galera-vpc.id}"
     route_table_id = "${aws_route_table.galera-private-Rtable.id}"
     destination_cidr_block = "0.0.0.0/0" 
-    gateway_id = aws_nat_gateway.galera-nat-gw[count.index].id
+    gateway_id = aws_nat_gateway.galera-nat-gw[0]
     }
 
 
@@ -113,30 +130,23 @@ resource "aws_route_table" "galera-public-Rtable" {
 resource "aws_route" "public_nat_gateway" {
     route_table_id = "${aws_route_table.galera-public-Rtable.id}"
     destination_cidr_block = "0.0.0.0/0" 
-    gateway_id = "${aws_nat_gateway.galera-nat-gw.id}" 
+    gateway_id = "${aws_internet_gateway.galera-igw.id}" 
     }
 
 resource "aws_route_table_association" "public" {
 #  count          = "${var.public_subnets_cidr}"
 #  count          = "${length(data.aws_availability_zones.available.names)}"
 #  subnet_id      = "${element(aws_subnet.public_subnet.*.id, count.index)}"
-  for_each       =  data.aws_subnet_ids.public_subnet.ids
+  for_each       =  data.aws_subnet_ids.public.ids
   subnet_id      = each.value
   route_table_id = "${aws_route_table.galera-public-Rtable.id}"
-}
-
-data "aws_subnet_ids" "private" {
-  vpc_id = var.galera-vpc
-  tags = {
-    Name = "*private*"
-  }
 }
 
 resource "aws_route_table_association" "private" {
 #  count          = "${var.private_subnets_cidr}"
 #  count          = "${length(data.aws_availability_zones.available.names)}"
 #  subnet_id      = "${element(aws_subnet.private_subnet.*.id, count.index)}"
-  for_each       =  data.aws_subnet_ids.private_subnet.ids
+  for_each       =  data.aws_subnet_ids.private.ids
   subnet_id      = each.value
   route_table_id = "${aws_route_table.galera-private-Rtable.id}"
 }

@@ -1,14 +1,14 @@
-module "aws_vpc" {
+module "dev_vpc" {
     source = "./modules/module-networking"
-    environment = ""
+    environment = "dev"
     vpc_cidr = "10.0.0.0/16" 
-    availability_zones = [
-        "us-east-2a",
-        "us-east-2b",
-    ]
+    # availability_zones = [
+    #     "us-east-2a",
+    #     "us-east-2b",
+    # ]
     
-    private_subnets = 2
-    public_subnets  = 2	
-    newbits 		      = 8
+   newbits_number = 8
+   private_subnets = 2
+   public_subnets = 2
 
 }

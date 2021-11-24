@@ -15,10 +15,10 @@ output "aws_nat_gateway" {
 }
 
 output "public_subnets_ids" {
-    value = aws_subnet.public_subnets_cidr[*].id
+    value = aws_subnet.public_subnets[*].id
 }
 
 output "private_subnets_ids" {
-    value = aws_subnet.private_subnet_cidr[*].id
+    value = aws_subnet.private_subnets[*].id
 }
 
