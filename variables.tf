@@ -35,10 +35,27 @@ variable "vpc_id" {
 #    default = ["us-east-2a", "us-east-2b"]
 #}
 
-# variable "app_count" {
-#     default = "1"
-# }
+variable "desired_count" {
+    default = "1"
+}
 
-# variable "container_image" {
-#     default = "galera-app"
-# }
+variable "container_image_front" {
+    default = "738757238296.dkr.ecr.us-east-2.amazonaws.com/frontend"
+}
+
+variable "container_image_back" {
+    default = "738757238296.dkr.ecr.us-east-2.amazonaws.com/backend"
+}
+
+variable "deployment_maximum_percent" {
+    default = "200"
+}
+
+variable "deployment_minimum_healthy_percent" {
+    default = "50"
+}
+
+variable "health_check_grace_period_seconds" {
+  description = "Seconds to ignore failing load balancer health checks on newly instantiated tasks to prevent premature shutdown, up to 1800. Only valid for services configured to use load balancers."
+  default     = 0
+}

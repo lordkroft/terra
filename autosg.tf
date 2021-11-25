@@ -66,7 +66,7 @@ resource "aws_launch_configuration" "launch_config" {
   user_data = <<EOF
 #!/bin/bash
 echo ECS_BACKEND_HOST= >> /etc/ecs/ecs.config;
-echo ECS_CLUSTER=${aws_ecs_cluster.ecs_project.name} >> /etc/ecs/ecs.config;
+echo ECS_CLUSTER=${aws_ecs_cluster.my_ecs_app.name} >> /etc/ecs/ecs.config;
 EOF
 
 
@@ -132,13 +132,13 @@ resource "aws_cloudwatch_metric_alarm" "memory-low" {
 resource "aws_appautoscaling_target" "ecs_app_target" {
   max_capacity       = 10
   min_capacity       = 1
-  resource_id        = "service/${aws_ecs_cluster.ecs_project.name}/${aws_ecs_service.ecs_project_service.name}"
+  resource_id        = "service/${aws_ecs_cluster.my_ecs_app.name}/${aws_ecs_service.service.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
 }
 
 resource "aws_appautoscaling_policy" "up" {
-    name = "${aws_ecs_service.ecs_project_service.name}_scale_up"
+    name = "${aws_ecs_service.service.name}_scale_up"
     service_namespace  = "ecs"
     resource_id        = aws_appautoscaling_target.ecs_app_target.resource_id
     scalable_dimension = aws_appautoscaling_target.ecs_app_target.scalable_dimension   
@@ -155,7 +155,7 @@ resource "aws_appautoscaling_policy" "up" {
 }
 
 resource "aws_appautoscaling_policy" "down" {
-    name = "${aws_ecs_service.ecs_project_service.name}_scale_down"
+    name = "${aws_ecs_service.service.name}_scale_down"
     service_namespace = "ecs"
     resource_id        = aws_appautoscaling_target.ecs_app_target.resource_id
     scalable_dimension = aws_appautoscaling_target.ecs_app_target.scalable_dimension   
@@ -169,3 +169,4 @@ resource "aws_appautoscaling_policy" "down" {
         }
     }
     depends_on = [aws_appautoscaling_target.ecs_app_target]
+}
