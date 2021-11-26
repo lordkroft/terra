@@ -11,7 +11,7 @@ data "aws_ami" "ubuntu" {
     values                  = ["hvm"]
   }
 
-  owners                    = ["413752907951"] # Canonical
+  owners                    = ["099720109477"] # Canonical
 }
 
 resource "aws_instance" "bastion_host" {
@@ -19,7 +19,7 @@ resource "aws_instance" "bastion_host" {
   ami                       = data.aws_ami.ubuntu.id
   instance_type             = "t3.micro"
   subnet_id                 = element(module.dev-vpc.public_subnets_ids, 0)
-  vpc_security_group_ids    = ["${aws_security_group.bastion.id}"]
+  vpc_security_group_ids    = ["${aws_security_group.bastion-sg.id}"]
   key_name = "bastion-key.pem"
   root_block_device {
       volume_size = "20"

@@ -38,7 +38,7 @@ resource "aws_security_group" "ecs_asg" {
     from_port               = 22
     to_port                 = 22
     protocol                = "tcp"
-    security_groups         = [aws_security_group.bastion.id]
+    security_groups         = [aws_security_group.bastion-sg.id]
   }
 
 
@@ -106,7 +106,7 @@ resource "aws_cloudwatch_metric_alarm" "memory-high" {
         "${aws_appautoscaling_policy.up.arn}"
     ]
     dimensions = {
-        AutoScalingGroupName = aws_autoscaling_group.ecs-cluster.name
+        AutoScalingGroupName = aws_autoscaling_group.cluster.name
     }
 }
 

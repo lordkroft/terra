@@ -11,7 +11,7 @@ resource "aws_lb" "galera-alb" {
   name            = "galera-alb"
   subnets         = data.aws_subnet_ids.public.ids
   load_balancer_type = "application"
-  security_groups = [aws_security_group.galera-alb-sg.id]
+  security_groups = [aws_security_group.load-balancer.id]
   internal           = false
 }
 

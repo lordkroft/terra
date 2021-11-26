@@ -54,8 +54,8 @@ resource "aws_ecs_task_definition" "my_ecs_app-task-def" {
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "${aws_cloudwatch_log_group.ecs_project-log-group.id}",
-          "awslogs-region": "${var.aws.region}",
+          "awslogs-group": "${aws_cloudwatch_log_group.my_ecs_app-log-group.id}",
+          "awslogs-region": "${var.aws_region}",
           "awslogs-stream-prefix": "${aws_cloudwatch_log_stream.my_ecs_app-log-stream.name}"
         }
       },

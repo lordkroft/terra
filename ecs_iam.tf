@@ -13,8 +13,8 @@ resource "aws_iam_role" "ecsIR" {
 }
 
 resource "aws_iam_role_policy" "amazonEC2ContainerServiceforEC2Role" {
-  name   = "ecs_instance_role_policy"
-  policy = file("role-policy/ecs-instance-role-policy.json")
+  name   = "ecs_role_policy"
+  policy = file("role-policy/ecs-role-policy.json")
   role       = aws_iam_role.ecsIR.name
   }
 
