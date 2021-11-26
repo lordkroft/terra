@@ -40,11 +40,11 @@ variable "desired_count" {
 }
 
 variable "container_image_front" {
-    default = "738757238296.dkr.ecr.us-east-2.amazonaws.com/frontend"
+    default = "IDD.dkr.ecr.us-east-2.amazonaws.com/front"
 }
 
 variable "container_image_back" {
-    default = "738757238296.dkr.ecr.us-east-2.amazonaws.com/backend"
+    default = "IDD.dkr.ecr.us-east-2.amazonaws.com/back"
 }
 
 variable "deployment_maximum_percent" {
