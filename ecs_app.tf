@@ -38,7 +38,7 @@ resource "aws_ecs_task_definition" "my_ecs_app-task-def" {
       },
       "portMappings": [
         {
-          "containerPort": 8080,
+          "containerPort": 80,
           "hostPort": 0
         }
       ],
@@ -83,7 +83,7 @@ resource "aws_ecs_service" "service" {
   load_balancer {
     target_group_arn = aws_lb_target_group.galera-tg-http.arn
     container_name   = "nginx-front"
-    container_port   = 8080
+    container_port   = 80
   }
   deployment_controller {
       type = "ECS"

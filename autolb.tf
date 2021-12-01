@@ -18,7 +18,7 @@ resource "aws_lb" "galera-alb" {
 
 resource "aws_lb_target_group" "galera-tg-http" {
   name        = "galera-tg-http"
-  port        = 8080
+  port        = 80
   protocol    = "HTTP"
   vpc_id      = module.dev-vpc.vpc_id
   target_type = "ip"
@@ -36,7 +36,7 @@ resource "aws_lb_target_group" "galera-tg-http" {
 
 resource "aws_lb_listener" "galera-http-listener" {
   load_balancer_arn = aws_lb.galera-alb.id
-  port              = "8080"
+  port              = "80"
   protocol          = "HTTP"
   depends_on        = [aws_lb_target_group.galera-tg-http]
 
@@ -52,8 +52,8 @@ resource "aws_security_group" "load-balancer" {
   vpc_id      = module.dev-vpc.vpc_id
 
   ingress {
-    from_port   = 8080
-    to_port     = 8080
+    from_port   = 80
+    to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }

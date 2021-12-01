@@ -1,14 +1,14 @@
-resource "aws_ecr_repository" "galera-ecr" {
-  name = "galera-ecr"
+resource "aws_ecr_repository" "space-registry" {
+  name = "space-registry"
   tags = {
-    Name        = "galera-ecr"
+    Name        = "space-registry"
     Environment = "${var.environment}"
   }
 }
 
 
 resource "aws_ecr_lifecycle_policy" "untagged" {
-  repository = aws_ecr_repository.galera-ecr.name
+  repository = aws_ecr_repository.space-registry.name
 
   policy = <<EOF
 {
@@ -32,7 +32,7 @@ EOF
 }
 
 resource "aws_ecr_lifecycle_policy" "tagged" {
-  repository = aws_ecr_repository.galera-ecr.name
+  repository = aws_ecr_repository.space-registry.name
 
   policy = <<EOF
 {

@@ -27,8 +27,8 @@ resource "aws_security_group" "ecs_asg" {
   vpc_id                    = module.dev-vpc.vpc_id
 
   ingress {
-    from_port               = 0
-    to_port                 = 5000#65535
+    from_port               = 80 #0(test1-from 80, test2-from 0)
+    to_port                 = 80 #listener port (trafic idet k ECS tolko ot ALB) 
     protocol                = "tcp"
     security_groups         = [aws_security_group.load-balancer.id]
   }
