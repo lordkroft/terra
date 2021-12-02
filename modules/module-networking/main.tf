@@ -79,6 +79,7 @@ resource "aws_nat_gateway" "galera-nat-gw" {
  }
 
 resource "aws_route_table" "galera-private-Rtable" {
+    count = var.private_subnets # 2 подсети
     vpc_id = "${aws_vpc.galera-vpc.id}"
     
     tags = {
@@ -88,7 +89,7 @@ resource "aws_route_table" "galera-private-Rtable" {
 
 resource "aws_route" "private" {
     count = var.private_subnets
-    route_table_id = "${aws_route_table.galera-private-Rtable.id}"
+    route_table_id = element(aws_route_table.galera-private-Rtable[*].id, count.index
     destination_cidr_block = "0.0.0.0/0" 
     nat_gateway_id = element(aws_nat_gateway.galera-nat-gw[*].id, count.index)
     }
@@ -126,6 +127,6 @@ resource "aws_route_table_association" "private" {
 #  subnet_id      = "${element(aws_subnet.private_subnet.*.id, count.index)}"
   #for_each       =  toset(data.aws_subnet_ids.private.ids)
   depends_on  =   [aws_subnet.private_subnets,]
-  subnet_id      = aws_subnet.private_subnets[count.index].id#each.value
-  route_table_id = "${aws_route_table.galera-private-Rtable.id}"
+  subnet_id      = aws_subnet.private_subnets[count.index].id #each.value
+  route_table_id = "${aws_route_table.galera-private-Rtable[count.index].id}"
 }

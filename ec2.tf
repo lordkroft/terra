@@ -20,7 +20,7 @@ resource "aws_instance" "bastion_host" {
   instance_type             = "t3.micro"
   subnet_id                 = element(module.dev-vpc.public_subnets_ids, 0)
   vpc_security_group_ids    = ["${aws_security_group.bastion-sg.id}"]
-  key_name = "bastion-key.pem"
+  key_name = "bastion-key"
   root_block_device {
       volume_size = "20"
     }
@@ -32,7 +32,7 @@ resource "aws_instance" "bastion_host" {
 
 
 resource "aws_security_group" "bastion-sg" {
-  name                      = "sg-bastion"
+  name                      = "bastion-sg"
   vpc_id                    = module.dev-vpc.vpc_id
 
   ingress {
