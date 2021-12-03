@@ -18,3 +18,4 @@ resource "aws_iam_role_policy" "amazonEC2ContainerServiceforEC2Role" {
   role       = aws_iam_role.ecsIR.name
   }
 
+

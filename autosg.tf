@@ -1,10 +1,14 @@
-data "aws_subnet_ids" "private" {
-   vpc_id = module.dev-vpc.vpc_id
-   filter {
-    name   = "tag:Name"
-    values = ["aws_subnet_private*"]
-  }
-}
+# data "aws_subnet_ids" "private" {
+#   vpc_id = var.vpc_id
+#   }
+#   tags = {
+#     subnet_type = "private"
+#   }
+#    filter {
+#     name   = "tag:Name"
+#     values = ["aws_subnet_private*"]
+#   }
+# }
 
 resource "aws_autoscaling_group" "cluster" {
   name                 = "auto_scaling_group"
@@ -13,7 +17,7 @@ resource "aws_autoscaling_group" "cluster" {
   desired_capacity     = 1
   health_check_type    = "EC2"
   launch_configuration = aws_launch_configuration.launch_config.name
-  vpc_zone_identifier  = data.aws_subnet_ids.private.ids
+  vpc_zone_identifier  = module.module-networking.private_subnets_ids
 
   tag {
     key                 = "Name"
@@ -24,11 +28,11 @@ resource "aws_autoscaling_group" "cluster" {
 
 resource "aws_security_group" "ecs_asg" {
   name                      = "ecs_asg"
-  vpc_id                    = module.dev-vpc.vpc_id
+  vpc_id                    = module.module-networking.vpc_id
 
   ingress {
-    from_port               = 80 #0(test1-from 80, test2-from 0)
-    to_port                 = 80 #listener port (trafic idet k ECS tolko ot ALB) 
+    from_port               = 33445 #0(test1-from 80, test2-from 0)
+    to_port                 = 55667 #listener port (trafic idet k ECS tolko ot ALB) 
     protocol                = "tcp"
     security_groups         = [aws_security_group.load-balancer.id]
   }
@@ -52,12 +56,12 @@ resource "aws_security_group" "ecs_asg" {
 
 resource "aws_launch_configuration" "launch_config" {
   name          = "ecs_cluster"
-  image_id      = "ami-0b440d17bfb7989dc"
-  instance_type = "t3.nano"
+  image_id      = "ami-086e001f1a73d208c"
+  instance_type = "t2.micro"
   security_groups             = [aws_security_group.ecs_asg.id]
   iam_instance_profile        = aws_iam_instance_profile.ecs_ec2.name
   associate_public_ip_address = false
-  key_name = "app-demo-key.pem"
+  key_name = "app-demo-key"
   root_block_device {
     volume_size = 30
     volume_type = "gp2"

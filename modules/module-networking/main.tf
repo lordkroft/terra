@@ -89,8 +89,8 @@ resource "aws_route_table" "galera-private-Rtable" {
 
 resource "aws_route" "private" {
     count = var.private_subnets
-    route_table_id = element(aws_route_table.galera-private-Rtable[*].id, count.index
-    destination_cidr_block = "0.0.0.0/0" 
+    route_table_id = element(aws_route_table.galera-private-Rtable[*].id, count.index)
+    destination_cidr_block = "0.0.0.0/0"
     nat_gateway_id = element(aws_nat_gateway.galera-nat-gw[*].id, count.index)
     }
 
