@@ -69,8 +69,9 @@ resource "aws_subnet" "private_subnets" {
 resource "aws_nat_gateway" "galera-nat-gw" {
    count = var.private_subnets #"${length(data.aws_availability_zones.available.names)}"
    allocation_id     = "${aws_eip.aws_EIP[count.index].id}"
-   connectivity_type = "public"
-   subnet_id         = "${element(aws_subnet.private_subnets.*.id, count.index)}"#0
+  # connectivity_type = "public"
+#   subnet_id         = "${element(aws_subnet.private_subnets.*.id, count.index)}"#0
+   subnet_id         = "${element(aws_subnet.public_subnets.*.id, count.index)}"
    depends_on        = [aws_internet_gateway.galera-igw]
    tags = {
     Name        = "galera-nat-gw"
