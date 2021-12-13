@@ -52,7 +52,7 @@ resource "aws_ecr_lifecycle_policy" "untagged1" {
             "rulePriority": 1,
             "description": "Expire images older than 7 days",
             "selection": {
-                "tagStatus": "untagged1",
+                "tagStatus": "untagged",
                 "countType": "sinceImagePushed",
                 "countUnit": "days",
                 "countNumber": 7
@@ -76,7 +76,7 @@ resource "aws_ecr_lifecycle_policy" "tagged1" {
             "rulePriority": 1,
             "description": "Keep last 10 images",
             "selection": {
-                "tagStatus": "tagged1",
+                "tagStatus": "tagged",
                 "tagPrefixList": ["v"],
                 "countType": "imageCountMoreThan",
                 "countNumber": 10
@@ -109,7 +109,7 @@ resource "aws_ecr_lifecycle_policy" "untagged2" {
             "rulePriority": 1,
             "description": "Expire images older than 7 days",
             "selection": {
-                "tagStatus": "untagged2",
+                "tagStatus": "untagged",
                 "countType": "sinceImagePushed",
                 "countUnit": "days",
                 "countNumber": 7
@@ -133,7 +133,7 @@ resource "aws_ecr_lifecycle_policy" "tagged2" {
             "rulePriority": 1,
             "description": "Keep last 10 images",
             "selection": {
-                "tagStatus": "tagged2",
+                "tagStatus": "tagged",
                 "tagPrefixList": ["v"],
                 "countType": "imageCountMoreThan",
                 "countNumber": 10
