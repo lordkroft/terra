@@ -5,7 +5,7 @@ resource "aws_autoscaling_group" "cluster" {
   desired_capacity     = 1
   health_check_type    = "EC2"
   launch_configuration = aws_launch_configuration.launch_config.name
-  vpc_zone_identifier  = module.module_networking.private_subnets_ids
+  vpc_zone_identifier  = var.private_subnets #module.module_networking.private_subnets_ids
 
   tag {
     key                 = "Name"
@@ -16,13 +16,13 @@ resource "aws_autoscaling_group" "cluster" {
 
 resource "aws_security_group" "ecs_asg" {
   name                      = "ecs_asg"
-  vpc_id                    = module.module_networking.vpc_id
+  vpc_id                    = var.vpc_id #module.module_networking.vpc_id
 
   ingress {
     from_port               = 0
     to_port                 = 0 
     protocol                = "tcp"
-    security_groups         = [aws_security_group.load_balancer.id]
+  #  security_groups         = [aws_security_group.load_balancer.id]
   }
 
 
@@ -30,7 +30,7 @@ resource "aws_security_group" "ecs_asg" {
     from_port               = 22
     to_port                 = 22
     protocol                = "tcp"
-    security_groups         = [aws_security_group.bastion_sg.id]
+  #  security_groups         = [aws_security_group.bastion_sg.id]
   }
 
 
@@ -58,7 +58,7 @@ resource "aws_launch_configuration" "launch_config" {
   user_data = <<EOF
 #!/bin/bash
 echo ECS_BACKEND_HOST= >> /etc/ecs/ecs.config;
-echo ECS_CLUSTER=${aws_ecs_cluster.my_ecs_app.name} >> /etc/ecs/ecs.config;
+echo ECS_CLUSTER=${var.cluster_name} >> /etc/ecs/ecs.config;
 EOF
 
 
@@ -122,15 +122,15 @@ resource "aws_cloudwatch_metric_alarm" "memory_low" {
 }
 
 resource "aws_appautoscaling_target" "ecs_app_target" {
-  max_capacity       = 10
+  max_capacity       = 4
   min_capacity       = 1
-  resource_id        = "service/${aws_ecs_cluster.my_ecs_app.name}/${aws_ecs_service.service.name}"
+  resource_id        = "service/${var.cluster_name}/${aws_ecs_service.service.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
 }
 
 resource "aws_appautoscaling_policy" "up" {
-    name = "${aws_ecs_service.service.name}_scale_up"
+    name = "${var.cluster_name}_scale_up" #"${aws_ecs_service.service.name}_scale_up"
     service_namespace  = "ecs"
     resource_id        = aws_appautoscaling_target.ecs_app_target.resource_id
     scalable_dimension = aws_appautoscaling_target.ecs_app_target.scalable_dimension   
@@ -147,7 +147,7 @@ resource "aws_appautoscaling_policy" "up" {
 }
 
 resource "aws_appautoscaling_policy" "down" {
-    name = "${aws_ecs_service.service.name}_scale_down"
+    name = "${var.cluster_name}_scale_down" #"${aws_ecs_service.service.name}_scale_down"
     service_namespace = "ecs"
     resource_id        = aws_appautoscaling_target.ecs_app_target.resource_id
     scalable_dimension = aws_appautoscaling_target.ecs_app_target.scalable_dimension   

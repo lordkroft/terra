@@ -33,7 +33,7 @@ resource "aws_instance" "bastion_host" {
 
 resource "aws_security_group" "bastion_sg" {
   name                      = "bastion_sg"
-  vpc_id                    = module.module_networking.vpc_id
+  vpc_id                    = module.module_networking.vpc_id #aws_vpc.galera_vpc.id #
 
   ingress {
     from_port               = 22

@@ -1,5 +1,5 @@
 resource "aws_ecs_cluster" "my_ecs_app" {
-  name = "my_ecs_app"
+  name = var.cluster_name
   tags = {
     Name        = "my_ecs_app"
   }
@@ -72,7 +72,7 @@ resource "aws_ecs_task_definition" "my_ecs_app_task_def" {
 
 resource "aws_ecs_service" "service" {
   name            = "service"
-  cluster         = aws_ecs_cluster.my_ecs_app.id
+  cluster         = var.cluster_name #aws_ecs_cluster.my_ecs_app.id
   task_definition = aws_ecs_task_definition.my_ecs_app_task_def.arn
   desired_count   = var.desired_count
   deployment_maximum_percent = var.deployment_maximum_percent

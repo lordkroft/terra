@@ -5,7 +5,7 @@ resource "aws_iam_instance_profile" "ecs_ec2" {
 
 resource "aws_iam_role" "ecsIR" {
   name = "ecsIR"
-  assume_role_policy =  file("role-policy/ec2-role.json")
+  assume_role_policy =  file("./modules/module_ecs/role-policy/ec2-role.json")
   
   tags = {
     Name = "ecs_iam"
@@ -14,7 +14,7 @@ resource "aws_iam_role" "ecsIR" {
 
 resource "aws_iam_role_policy" "amazonEC2ContainerServiceforEC2Role" {
   name   = "ecs_role_policy"
-  policy = file("role-policy/ecs-role-policy.json")
+  policy = file("./modules/module_ecs/role-policy/ecs-role-policy.json")
   role       = aws_iam_role.ecsIR.name
   }
 
