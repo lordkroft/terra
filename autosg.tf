@@ -1,15 +1,3 @@
-# data "aws_subnet_ids" "private" {
-#   vpc_id = var.vpc_id
-#   }
-#   tags = {
-#     subnet_type = "private"
-#   }
-#    filter {
-#     name   = "tag:Name"
-#     values = ["aws_subnet_private*"]
-#   }
-# }
-
 resource "aws_autoscaling_group" "cluster" {
   name                 = "auto_scaling_group"
   max_size             = 4
@@ -17,7 +5,7 @@ resource "aws_autoscaling_group" "cluster" {
   desired_capacity     = 1
   health_check_type    = "EC2"
   launch_configuration = aws_launch_configuration.launch_config.name
-  vpc_zone_identifier  = module.module-networking.private_subnets_ids
+  vpc_zone_identifier  = module.module_networking.private_subnets_ids
 
   tag {
     key                 = "Name"
@@ -28,13 +16,13 @@ resource "aws_autoscaling_group" "cluster" {
 
 resource "aws_security_group" "ecs_asg" {
   name                      = "ecs_asg"
-  vpc_id                    = module.module-networking.vpc_id
+  vpc_id                    = module.module_networking.vpc_id
 
   ingress {
-    from_port               = 33445 #0(test1-from 80, test2-from 0)
-    to_port                 = 55667 #listener port (trafic idet k ECS tolko ot ALB) 
+    from_port               = 0
+    to_port                 = 0 
     protocol                = "tcp"
-    security_groups         = [aws_security_group.load-balancer.id]
+    security_groups         = [aws_security_group.load_balancer.id]
   }
 
 
@@ -42,7 +30,7 @@ resource "aws_security_group" "ecs_asg" {
     from_port               = 22
     to_port                 = 22
     protocol                = "tcp"
-    security_groups         = [aws_security_group.bastion-sg.id]
+    security_groups         = [aws_security_group.bastion_sg.id]
   }
 
 
@@ -79,24 +67,24 @@ EOF
   }
 }
 
-resource "aws_autoscaling_policy" "scale-up" {
-    name = "scale-up"
+resource "aws_autoscaling_policy" "scale_up" {
+    name = "scale_up"
     scaling_adjustment = 1
     adjustment_type = "ChangeInCapacity"
     cooldown = 300
     autoscaling_group_name = "${aws_autoscaling_group.cluster.name}"
 }
 
-resource "aws_autoscaling_policy" "scale-down" {
-    name = "scale-down"
+resource "aws_autoscaling_policy" "scale_down" {
+    name = "scale_down"
     scaling_adjustment = -1
     adjustment_type = "ChangeInCapacity"
     cooldown = 300
     autoscaling_group_name = "${aws_autoscaling_group.cluster.name}"
 }
 
-resource "aws_cloudwatch_metric_alarm" "memory-high" {
-    alarm_name = "high-util-memory"
+resource "aws_cloudwatch_metric_alarm" "memory_high" {
+    alarm_name = "high_util_memory"
     comparison_operator = "GreaterThanOrEqualToThreshold"
     evaluation_periods = "2"
     metric_name = "MemoryUtilization"
@@ -106,7 +94,7 @@ resource "aws_cloudwatch_metric_alarm" "memory-high" {
     threshold = "85"
     alarm_description = "Memory utilization >85%"
     alarm_actions = [
-        "${aws_autoscaling_policy.scale-up.arn}",
+        "${aws_autoscaling_policy.scale_up.arn}",
         "${aws_appautoscaling_policy.up.arn}"
     ]
     dimensions = {
@@ -114,8 +102,8 @@ resource "aws_cloudwatch_metric_alarm" "memory-high" {
     }
 }
 
-resource "aws_cloudwatch_metric_alarm" "memory-low" {
-    alarm_name = "low-util-memory"
+resource "aws_cloudwatch_metric_alarm" "memory_low" {
+    alarm_name = "low_util_memory"
     comparison_operator = "LessThanOrEqualToThreshold"
     evaluation_periods = "2"
     metric_name = "MemoryUtilization"
@@ -125,7 +113,7 @@ resource "aws_cloudwatch_metric_alarm" "memory-low" {
     threshold = "50"
     alarm_description = "Memory utilization is normal"
     alarm_actions = [
-        "${aws_autoscaling_policy.scale-down.arn}",
+        "${aws_autoscaling_policy.scale_down.arn}",
         "${aws_appautoscaling_policy.down.arn}"
     ]
     dimensions = {

@@ -11,7 +11,7 @@ variable "aws_region" {
 }
 
 variable "vpc_id" {
- 	default = "galera-vpc"
+ 	default = "galera_vpc"
  }
 
 
@@ -19,21 +19,6 @@ variable "environment" {
 description = "The environment which to fetch the configuration for."
 type = string
 }
-
-# variable "public_subnets_cidr" {
-#     type = list
-#     default = ["10.0.101.0/24", "10.0.102.0/24"]
-# }
-
-# variable "private_subnets_cidr" {
-#     type = list
-#     default = ["10.0.1.0/24", "10.0.2.0/24"]
-# }
-
-#variable "availability_zones" {
-#    type = list
-#    default = ["us-east-2a", "us-east-2b"]
-#}
 
 variable "desired_count" {
     default = "1"

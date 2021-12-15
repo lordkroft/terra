@@ -1,29 +1,18 @@
-# data "aws_subnet_ids" "public" {
-#    vpc_id = "${var.vpc_id}"# module.galera-vpc.vpc_id
-#    tags = {
-#     subnet_type = "public"
-#   }
-  #  filter {
-  #   name   = "tag:Name"
-  #   values = ["aws_subnet_public*"]
-  # }
-# }
-
-
-resource "aws_lb" "galera-alb" {
-  name            = "galera-alb"
-  subnets         = module.module-networking.public_subnets_ids
+resource "aws_lb" "galera_alb" {
+  name        = "galera-alb"
+  subnets         = module.module_networking.public_subnets_ids
   load_balancer_type = "application"
-  security_groups = [aws_security_group.load-balancer.id]
+  security_groups = [aws_security_group.load_balancer.id]
   internal           = false
+  
 }
 
 
-resource "aws_lb_target_group" "galera-tg-http" {
+resource "aws_lb_target_group" "galera_tg_http" {
   name        = "galera-tg-http"
   port        = 80
   protocol    = "HTTP"
-  vpc_id      = module.module-networking.vpc_id #"${var.vpc_id}"#module.galera-vpc.vpc_id
+  vpc_id      = module.module_networking.vpc_id
   health_check {
     path                = "/index"
     port                = "traffic-port"
@@ -36,22 +25,22 @@ resource "aws_lb_target_group" "galera-tg-http" {
 }
 
 
-resource "aws_lb_listener" "galera-http-listener" {
-  load_balancer_arn = aws_lb.galera-alb.id
+resource "aws_lb_listener" "galera_http_listener" {
+  load_balancer_arn = aws_lb.galera_alb.id
   port              = "80"
   protocol          = "HTTP"
-  depends_on        = [aws_lb_target_group.galera-tg-http]
+  depends_on        = [aws_lb_target_group.galera_tg_http]
 
   default_action {
-    target_group_arn = aws_lb_target_group.galera-tg-http.arn
+    target_group_arn = aws_lb_target_group.galera_tg_http.arn
     type             = "forward"
   }
 }
 
-resource "aws_security_group" "load-balancer" {
+resource "aws_security_group" "load_balancer" {
   name        = "load_balancer_security_group"
   description = "Controls access to the ALB"
-  vpc_id      = module.module-networking.vpc_id #module.galera-vpc.vpc_id
+  vpc_id      = module.module_networking.vpc_id
 
   ingress {
     from_port   = 80

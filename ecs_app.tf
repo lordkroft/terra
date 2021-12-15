@@ -5,35 +5,35 @@ resource "aws_ecs_cluster" "my_ecs_app" {
   }
 }
 
-resource "aws_cloudwatch_log_group" "my_ecs_app-log-group" {
-  name = "my_ecs_app-logs"
+resource "aws_cloudwatch_log_group" "my_ecs_app_log_group" {
+  name = "my_ecs_app_logs"
 
   tags = {
     Application = "App"
   }
 }
 
-resource "aws_cloudwatch_log_stream" "my_ecs_app-log-stream" {
-  name           = "my_ecs_app-log-stream"
-  log_group_name = aws_cloudwatch_log_group.my_ecs_app-log-group.name
+resource "aws_cloudwatch_log_stream" "my_ecs_app_log_stream" {
+  name           = "my_ecs_app_log_stream"
+  log_group_name = aws_cloudwatch_log_group.my_ecs_app_log_group.name
 }
 
-resource "aws_ecs_task_definition" "my_ecs_app-task-def" {
-  family = "my_ecs_app-task"
+resource "aws_ecs_task_definition" "my_ecs_app_task_def" {
+  family = "my_ecs_app_task"
 
   container_definitions = <<DEFINITION
   [
     {
       "name": "nginx-front",
-      "image": "${var.container_image_front}:latest",
+      "image": var.container_image_front:latest",
       "essential": true,
       "memory": 128,
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "${aws_cloudwatch_log_group.my_ecs_app-log-group.id}",
-          "awslogs-region": "${var.aws_region}",
-          "awslogs-stream-prefix": "${aws_cloudwatch_log_stream.my_ecs_app-log-stream.name}"
+          "awslogs-group": "${aws_cloudwatch_log_group.my_ecs_app_log_group.id}",
+          "awslogs-region": var.aws_region,
+          "awslogs-stream-prefix": "${aws_cloudwatch_log_stream.my_ecs_app_log_stream.name}"
         }
       },
       "portMappings": [
@@ -48,15 +48,15 @@ resource "aws_ecs_task_definition" "my_ecs_app-task-def" {
 
     {
       "name": "flask",
-      "image": "${var.container_image_back}:latest",
+      "image": var.container_image_back:latest",
       "essential": true,
       "memory": 128,
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "${aws_cloudwatch_log_group.my_ecs_app-log-group.id}",
-          "awslogs-region": "${var.aws_region}",
-          "awslogs-stream-prefix": "${aws_cloudwatch_log_stream.my_ecs_app-log-stream.name}"
+          "awslogs-group": "${aws_cloudwatch_log_group.my_ecs_app_log_group.id}",
+          "awslogs-region": var.aws_region,
+          "awslogs-stream-prefix": "${aws_cloudwatch_log_stream.my_ecs_app_log_stream.name}"
         }
       },
       "networkMode": "bridge"
@@ -66,22 +66,22 @@ resource "aws_ecs_task_definition" "my_ecs_app-task-def" {
 
   requires_compatibilities = ["EC2"]
   tags = {
-    Name        = "front-ecs-task-definition"
+    Name        = "front_ecs_task_definition"
   }
 }
 
 resource "aws_ecs_service" "service" {
   name            = "service"
   cluster         = aws_ecs_cluster.my_ecs_app.id
-  task_definition = aws_ecs_task_definition.my_ecs_app-task-def.arn
-  desired_count   = "${var.desired_count}"
-  deployment_maximum_percent = "${var.deployment_maximum_percent}"
-  deployment_minimum_healthy_percent = "${var.deployment_minimum_healthy_percent}"
-  health_check_grace_period_seconds  = "${var.health_check_grace_period_seconds}"
+  task_definition = aws_ecs_task_definition.my_ecs_app_task_def.arn
+  desired_count   = var.desired_count
+  deployment_maximum_percent = var.deployment_maximum_percent
+  deployment_minimum_healthy_percent = var.deployment_minimum_healthy_percent
+  health_check_grace_period_seconds  = var.health_check_grace_period_seconds
 
   
   load_balancer {
-    target_group_arn = aws_lb_target_group.galera-tg-http.arn
+    target_group_arn = aws_lb_target_group.galera_tg_http.arn
     container_name   = "nginx-front"
     container_port   = 80
   }

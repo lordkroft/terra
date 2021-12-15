@@ -1,15 +1,15 @@
 ####THIS IS FOR PERSONAL USE###
-resource "aws_ecr_repository" "space-registry" {
-  name = "space-registry"
+resource "aws_ecr_repository" "space_registry" {
+  name = "space_registry"
   tags = {
-    Name        = "space-registry"
-    Environment = "${var.environment}"
+    Name        = "space_registry"
+    Environment = var.environment
   }
 }
 
 
 resource "aws_ecr_lifecycle_policy" "untagged" {
-  repository = aws_ecr_repository.space-registry.name
+  repository = aws_ecr_repository.space_registry.name
 
   policy = <<EOF
 {
@@ -37,7 +37,7 @@ resource "aws_ecr_repository" "frontend" {
   name = "frontend"
   tags = {
     Name        = "frontend"
-    Environment = "${var.environment}"
+    Environment = var.environment
   }
 }
 
@@ -94,7 +94,7 @@ resource "aws_ecr_repository" "backend" {
   name = "backend"
   tags = {
     Name        = "backend"
-    Environment = "${var.environment}"
+    Environment = var.environment
   }
 }
 

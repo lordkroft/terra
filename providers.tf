@@ -1,5 +1,6 @@
 terraform {
     backend "s3" {}
+    
     }
 
 data "terraform_remote_state" "state" {
@@ -13,5 +14,5 @@ data "terraform_remote_state" "state" {
 
 provider "aws" {
     profile = "lordkroft"
-    region =  "${var.aws_region}"
+    region =  var.aws_region
 }

@@ -11,15 +11,15 @@ data "aws_ami" "ubuntu" {
     values                  = ["hvm"]
   }
 
-  owners                    = ["099720109477"] # Canonical
+  owners                    = ["099720109477"] 
 }
 
 resource "aws_instance" "bastion_host" {
   count                     = 1
   ami                       = data.aws_ami.ubuntu.id
   instance_type             = "t3.micro"
-  subnet_id                 = element(module.module-networking.public_subnets_ids, 0)
-  vpc_security_group_ids    = ["${aws_security_group.bastion-sg.id}"]
+  subnet_id                 = element(module.module_networking.public_subnets_ids, 0)
+  vpc_security_group_ids    = ["${aws_security_group.bastion_sg.id}"]
   key_name = "bastion-key"
   root_block_device {
       volume_size = "20"
@@ -31,9 +31,9 @@ resource "aws_instance" "bastion_host" {
 }
 
 
-resource "aws_security_group" "bastion-sg" {
-  name                      = "bastion-sg"
-  vpc_id                    = module.module-networking.vpc_id
+resource "aws_security_group" "bastion_sg" {
+  name                      = "bastion_sg"
+  vpc_id                    = module.module_networking.vpc_id
 
   ingress {
     from_port               = 22
