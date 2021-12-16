@@ -22,10 +22,4 @@ type = string
 
 
 
-variable "container_image_front" {
-    default = "413752907951.dkr.ecr.us-east-2.amazonaws.com/frontend"
-}
 
-variable "container_image_back" {
-    default = "413752907951.dkr.ecr.us-east-2.amazonaws.com/backend"
-}

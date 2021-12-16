@@ -27,3 +27,12 @@ variable "health_check_grace_period_seconds" {
 }
 
 variable "bastion_sg" {}
+
+
+variable "container_image_front" {
+    default = "413752907951.dkr.ecr.us-east-2.amazonaws.com/frontend"
+}
+
+variable "container_image_back" {
+    default = "413752907951.dkr.ecr.us-east-2.amazonaws.com/backend"
+}
