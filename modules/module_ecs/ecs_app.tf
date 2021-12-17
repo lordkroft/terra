@@ -6,7 +6,7 @@ resource "aws_ecs_cluster" "my_ecs_app" {
 }
 
 resource "aws_cloudwatch_log_group" "my_ecs_app_log_group" {
-  name = "my_ecs_app_logs"
+  name = "my_ecs_app_log_group"
 
   tags = {
     Application = "App"
@@ -25,7 +25,7 @@ resource "aws_ecs_task_definition" "my_ecs_app_task_def" {
   [
     {
       "name": "nginx-front",
-      "image": "var.container_image_front:latest",
+      "image": "${var.container_image_front}:latest",
       "essential": true,
       "memory": 128,
       "logConfiguration": {
@@ -33,6 +33,7 @@ resource "aws_ecs_task_definition" "my_ecs_app_task_def" {
         "options": {
           "awslogs-group": "${aws_cloudwatch_log_group.my_ecs_app_log_group.id}",
           "awslogs-region": "us-east-2",
+          "awslogs-create-group": "true",
           "awslogs-stream-prefix": "${aws_cloudwatch_log_stream.my_ecs_app_log_stream.name}"
         }
       },
@@ -48,7 +49,7 @@ resource "aws_ecs_task_definition" "my_ecs_app_task_def" {
 
     {
       "name": "flask",
-      "image": "var.container_image_back:latest",
+      "image": "${var.container_image_back}:latest",
       "essential": true,
       "memory": 128,
       "logConfiguration": {
@@ -56,6 +57,7 @@ resource "aws_ecs_task_definition" "my_ecs_app_task_def" {
         "options": {
           "awslogs-group": "${aws_cloudwatch_log_group.my_ecs_app_log_group.id}",
           "awslogs-region": "us-east-2",
+          "awslogs-create-group": "true",
           "awslogs-stream-prefix": "${aws_cloudwatch_log_stream.my_ecs_app_log_stream.name}"
         }
       },
