@@ -51,7 +51,6 @@ resource "aws_iam_role_policy" "amazonEC2ContainerServiceforEC2Role" {
                 "ecr:BatchGetImage",
                 "logs:CreateLogStream",
                 "logs:PutLogEvents",
-                "s3:ListBucket",
                 "s3:PutObject",
                 "s3:GetObject"
             ],
@@ -73,8 +72,6 @@ resource "aws_iam_role_policy" "amazonEC2ContainerServiceforEC2Role" {
         {
             "Effect": "Allow",
             "Action": [
-                "iam:ListUserTags",
-                "iam:ListRoleTags",
                 "iam:TagUser",
                 "iam:TagRole",
                 "iam:UntagUser",
