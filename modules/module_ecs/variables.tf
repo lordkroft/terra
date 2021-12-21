@@ -18,7 +18,7 @@ variable "deployment_maximum_percent" {
 }
 
 variable "deployment_minimum_healthy_percent" {
-    default = "50"
+    default = "90"
 }
 
 variable "health_check_grace_period_seconds" {
